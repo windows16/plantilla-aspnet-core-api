@@ -4,7 +4,7 @@ using System.Text.Json;
 
 namespace plantilla_aspnet_core_api.Infrastructure;
 
-public sealed class SupabaseRestClient(HttpClient httpClient)
+public sealed class ClienteRestSupabase(HttpClient httpClient)
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 

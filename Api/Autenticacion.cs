@@ -8,7 +8,7 @@ public static class AuthenticationExtensions
 {
     public static IServiceCollection AddSupabaseAuthentication(this IServiceCollection services, IConfiguration configuration)
     {
-        var options = configuration.GetSection("Supabase").Get<SupabaseOptions>() ?? new();
+        var options = configuration.GetSection("Supabase").Get<OpcionesSupabase>() ?? new();
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(jwt =>
         {
             jwt.RequireHttpsMetadata = options.RequireHttpsMetadata;

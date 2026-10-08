@@ -4,9 +4,9 @@ using plantilla_aspnet_core_api.Domain;
 
 namespace plantilla_aspnet_core_api.Infrastructure;
 
-public sealed class OrganizationRepository(SupabaseRestClient supabase) : IOrganizationRepository
+public sealed class RepositorioOrganizaciones(ClienteRestSupabase supabase) : IRepositorioOrganizaciones
 {
-    public async Task<IReadOnlyList<Organizacion>> GetForUserAsync(Guid usuarioId, CancellationToken ct)
+    public async Task<IReadOnlyList<Organizacion>> ObtenerParaUsuarioAsync(Guid usuarioId, CancellationToken ct)
     {
         using var document = await supabase.GetAsync("organizaciones",
             $"select=id,nombre,creado_en,miembros_organizacion!inner(usuario_id)&miembros_organizacion.usuario_id=eq.{usuarioId}&order=nombre", ct);
@@ -18,9 +18,9 @@ public sealed class OrganizationRepository(SupabaseRestClient supabase) : IOrgan
     }
 }
 
-public sealed class RoleRepository(SupabaseRestClient supabase) : IRoleRepository
+public sealed class RepositorioRoles(ClienteRestSupabase supabase) : IRepositorioRoles
 {
-    public async Task<IReadOnlyList<Rol>> GetForTenantAsync(Guid organizacionId, CancellationToken ct)
+    public async Task<IReadOnlyList<Rol>> ObtenerParaOrganizacionAsync(Guid organizacionId, CancellationToken ct)
     {
         using var document = await supabase.GetAsync("roles",
             $"select=id,nombre,descripcion,creado_en,miembros_organizacion!inner(organizacion_id)&miembros_organizacion.organizacion_id=eq.{organizacionId}&order=nombre", ct);
@@ -33,9 +33,9 @@ public sealed class RoleRepository(SupabaseRestClient supabase) : IRoleRepositor
     }
 }
 
-public sealed class MemberRepository(SupabaseRestClient supabase) : IMemberRepository
+public sealed class RepositorioMiembros(ClienteRestSupabase supabase) : IRepositorioMiembros
 {
-    public async Task AssignRoleAsync(Guid organizacionId, Guid usuarioId, Guid rolId, CancellationToken ct)
+    public async Task AsignarRolAsync(Guid organizacionId, Guid usuarioId, Guid rolId, CancellationToken ct)
     {
         await supabase.PostAsync("miembros_organizacion", new
         {
@@ -45,9 +45,9 @@ public sealed class MemberRepository(SupabaseRestClient supabase) : IMemberRepos
     }
 }
 
-public sealed class AuditRepository(SupabaseRestClient supabase) : IAuditRepository
+public sealed class RepositorioAuditoria(ClienteRestSupabase supabase) : IRepositorioAuditoria
 {
-    public async Task<IReadOnlyList<RegistroAuditoria>> GetForTenantAsync(Guid organizacionId, CancellationToken ct)
+    public async Task<IReadOnlyList<RegistroAuditoria>> ObtenerParaOrganizacionAsync(Guid organizacionId, CancellationToken ct)
     {
         using var document = await supabase.GetAsync("registros_auditoria",
             $"select=id,usuario_id,organizacion_id,accion,recurso,recurso_id,detalles,creado_en&organizacion_id=eq.{organizacionId}&order=creado_en.desc", ct);
@@ -61,12 +61,12 @@ public sealed class AuditRepository(SupabaseRestClient supabase) : IAuditReposit
     }
 }
 
-public sealed class AuditService(
-    SupabaseRestClient supabase,
-    ICurrentUserService currentUser,
-    ITenantContextService tenant) : IAuditService
+public sealed class ServicioAuditoria(
+    ClienteRestSupabase supabase,
+    IServicioUsuarioActual currentUser,
+    IServicioContextoOrganizacion tenant) : IServicioAuditoria
 {
-    public async Task LogAsync(string accion, string recurso, Guid? recursoId, object detalles, CancellationToken ct = default)
+    public async Task RegistrarAsync(string accion, string recurso, Guid? recursoId, object detalles, CancellationToken ct = default)
     {
         if (!Guid.TryParse(currentUser.UsuarioId, out var userId) || tenant.OrganizacionId is not Guid organizationId)
             throw new InvalidOperationException("No hay usuario u organización válida para registrar la auditoría.");

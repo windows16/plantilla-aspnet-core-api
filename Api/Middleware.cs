@@ -4,17 +4,17 @@ using Microsoft.AspNetCore.Http;
 
 namespace plantilla_aspnet_core_api.Api;
 
-public sealed class TenantContextMiddleware(RequestDelegate next)
+public sealed class MiddlewareContextoOrganizacion(RequestDelegate next)
 {
     public async Task InvokeAsync(HttpContext context)
     {
-        if (context.GetEndpoint()?.Metadata.GetMetadata<RequireTenantAttribute>() is not null)
+        if (context.GetEndpoint()?.Metadata.GetMetadata<RequiereOrganizacionAttribute>() is not null)
         {
             var value = context.Request.Headers["X-Organizacion-Id"].FirstOrDefault();
             if (!Guid.TryParse(value, out _))
             {
                 context.Response.StatusCode = StatusCodes.Status400BadRequest;
-                await context.Response.WriteAsJsonAsync(new ProblemDetailsResponse(
+                await context.Response.WriteAsJsonAsync(new RespuestaProblema(
                     "https://httpstatuses.com/400", "Bad Request", 400,
                     "El encabezado X-Organizacion-Id es obligatorio y debe ser un UUID válido.", context.TraceIdentifier));
                 return;
@@ -24,7 +24,7 @@ public sealed class TenantContextMiddleware(RequestDelegate next)
     }
 }
 
-public sealed class StandardProblemDetailsMiddleware(RequestDelegate next)
+public sealed class MiddlewareErroresEstandar(RequestDelegate next)
 {
     public async Task InvokeAsync(HttpContext context)
     {
@@ -34,22 +34,22 @@ public sealed class StandardProblemDetailsMiddleware(RequestDelegate next)
 
         context.Response.ContentType = "application/problem+json";
         var title = context.Response.StatusCode == 401 ? "Unauthorized" : "Forbidden";
-        await context.Response.WriteAsync(JsonSerializer.Serialize(new ProblemDetailsResponse(
+        await context.Response.WriteAsync(JsonSerializer.Serialize(new RespuestaProblema(
             $"https://httpstatuses.com/{context.Response.StatusCode}", title, context.Response.StatusCode,
             context.Response.StatusCode == 401 ? "Se requiere autenticación válida." : "No tiene el permiso requerido.",
             context.TraceIdentifier)));
     }
 }
 
-public sealed class ProblemDetailsExceptionHandler(
+public sealed class ManejadorExcepcionesProblemDetails(
     IHostEnvironment environment,
-    ILogger<ProblemDetailsExceptionHandler> logger) : IExceptionHandler
+    ILogger<ManejadorExcepcionesProblemDetails> logger) : IExceptionHandler
 {
     public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception, CancellationToken cancellationToken)
     {
         logger.LogError(exception, "Error no controlado durante la solicitud {TraceId}", httpContext.TraceIdentifier);
         httpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
-        await httpContext.Response.WriteAsJsonAsync(new ProblemDetailsResponse(
+        await httpContext.Response.WriteAsJsonAsync(new RespuestaProblema(
             "https://httpstatuses.com/500", "Internal Server Error", 500,
             environment.IsDevelopment() ? exception.Message : "Ocurrió un error interno.",
             httpContext.TraceIdentifier), cancellationToken);
@@ -57,4 +57,4 @@ public sealed class ProblemDetailsExceptionHandler(
     }
 }
 
-public sealed record ProblemDetailsResponse(string Type, string Title, int Status, string Detail, string TraceId);
+public sealed record RespuestaProblema(string Type, string Title, int Status, string Detail, string TraceId);

@@ -4,7 +4,7 @@ using plantilla_aspnet_core_api.Application;
 
 namespace plantilla_aspnet_core_api.Infrastructure;
 
-public sealed class CurrentUserService(IHttpContextAccessor accessor) : ICurrentUserService
+public sealed class ServicioUsuarioActual(IHttpContextAccessor accessor) : IServicioUsuarioActual
 {
     private ClaimsPrincipal User => accessor.HttpContext?.User ?? new ClaimsPrincipal();
     public string? UsuarioId => User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
@@ -12,7 +12,7 @@ public sealed class CurrentUserService(IHttpContextAccessor accessor) : ICurrent
     public bool IsAuthenticated => User.Identity?.IsAuthenticated == true;
 }
 
-public sealed class TenantContextService(IHttpContextAccessor accessor) : ITenantContextService
+public sealed class ServicioContextoOrganizacion(IHttpContextAccessor accessor) : IServicioContextoOrganizacion
 {
     public Guid? OrganizacionId
     {

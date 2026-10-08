@@ -1,6 +1,6 @@
 namespace plantilla_aspnet_core_api.Infrastructure;
 
-public sealed class SupabaseOptions
+public sealed class OpcionesSupabase
 {
     public string Url { get; set; } = string.Empty;
     public string Issuer { get; set; } = string.Empty;
@@ -10,7 +10,7 @@ public sealed class SupabaseOptions
     public bool RequireHttpsMetadata { get; set; } = true;
 }
 
-public sealed class CacheSettings
+public sealed class ConfiguracionCache
 {
-    public int PermissionCacheExpirationMinutes { get; set; } = 10;
+    public int ExpiracionCachePermisosMinutos { get; set; } = 10;
 }

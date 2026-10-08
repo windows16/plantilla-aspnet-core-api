@@ -6,7 +6,7 @@ using plantilla_aspnet_core_api.Infrastructure;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddProblemDetails();
-builder.Services.AddControllers();
+builder.Services.AddControllersWithViews();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -20,24 +20,24 @@ builder.Services.AddSwaggerGen(options =>
     {
         [new OpenApiSecurityScheme { Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" } }] = Array.Empty<string>()
     });
-    options.OperationFilter<OrganizationHeaderOperationFilter>();
+    options.OperationFilter<FiltroCabeceraOrganizacion>();
 });
 
-builder.Services.Configure<SupabaseOptions>(builder.Configuration.GetSection("Supabase"));
-builder.Services.Configure<CacheSettings>(builder.Configuration.GetSection("CacheSettings"));
+builder.Services.Configure<OpcionesSupabase>(builder.Configuration.GetSection("Supabase"));
+builder.Services.Configure<ConfiguracionCache>(builder.Configuration.GetSection("ConfiguracionCache"));
 builder.Services.AddMemoryCache();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddSupabaseAuthentication(builder.Configuration);
 builder.Services.AddAuthorization();
-builder.Services.AddExceptionHandler<ProblemDetailsExceptionHandler>();
-builder.Services.AddSingleton<Microsoft.AspNetCore.Authorization.IAuthorizationPolicyProvider, PermissionPolicyProvider>();
-builder.Services.AddScoped<Microsoft.AspNetCore.Authorization.IAuthorizationHandler, PermissionAuthorizationHandler>();
-builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
-builder.Services.AddScoped<ITenantContextService, TenantContextService>();
+builder.Services.AddExceptionHandler<ManejadorExcepcionesProblemDetails>();
+builder.Services.AddSingleton<Microsoft.AspNetCore.Authorization.IAuthorizationPolicyProvider, ProveedorPoliticasPermisos>();
+builder.Services.AddScoped<Microsoft.AspNetCore.Authorization.IAuthorizationHandler, ManejadorAutorizacionPermisos>();
+builder.Services.AddScoped<IServicioUsuarioActual, ServicioUsuarioActual>();
+builder.Services.AddScoped<IServicioContextoOrganizacion, ServicioContextoOrganizacion>();
 
-builder.Services.AddHttpClient<SupabaseRestClient>((sp, client) =>
+builder.Services.AddHttpClient<ClienteRestSupabase>((sp, client) =>
 {
-    var options = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<SupabaseOptions>>().Value;
+    var options = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<OpcionesSupabase>>().Value;
     if (string.IsNullOrWhiteSpace(options.Url) || string.IsNullOrWhiteSpace(options.ServiceRoleKey))
         throw new InvalidOperationException("Supabase:Url y Supabase:ServiceRoleKey son obligatorios.");
 
@@ -45,19 +45,19 @@ builder.Services.AddHttpClient<SupabaseRestClient>((sp, client) =>
     client.DefaultRequestHeaders.Add("apikey", options.ServiceRoleKey);
     client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", options.ServiceRoleKey);
 });
-builder.Services.AddScoped<IPermissionService, PermissionService>();
-builder.Services.AddScoped<IAuditService, AuditService>();
-builder.Services.AddScoped<IOrganizationRepository, OrganizationRepository>();
-builder.Services.AddScoped<IRoleRepository, RoleRepository>();
-builder.Services.AddScoped<IMemberRepository, MemberRepository>();
-builder.Services.AddScoped<IAuditRepository, AuditRepository>();
+builder.Services.AddScoped<IServicioPermisos, ServicioPermisos>();
+builder.Services.AddScoped<IServicioAuditoria, ServicioAuditoria>();
+builder.Services.AddScoped<IRepositorioOrganizaciones, RepositorioOrganizaciones>();
+builder.Services.AddScoped<IRepositorioRoles, RepositorioRoles>();
+builder.Services.AddScoped<IRepositorioMiembros, RepositorioMiembros>();
+builder.Services.AddScoped<IRepositorioAuditoria, RepositorioAuditoria>();
 
 var app = builder.Build();
 
 app.UseExceptionHandler();
-app.UseMiddleware<StandardProblemDetailsMiddleware>();
+app.UseMiddleware<MiddlewareErroresEstandar>();
 app.UseRouting();
-app.UseMiddleware<TenantContextMiddleware>();
+app.UseMiddleware<MiddlewareContextoOrganizacion>();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -68,5 +68,8 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.Run();
