@@ -12,7 +12,6 @@ Desde la carpeta del proyecto:
 ```powershell
 dotnet user-secrets set "Supabase:Url" "https://<referencia-proyecto>.supabase.co"
 dotnet user-secrets set "Supabase:Issuer" "https://<referencia-proyecto>.supabase.co/auth/v1"
-dotnet user-secrets set "Supabase:JwtSecret" "<secreto-jwt>"
 dotnet user-secrets set "Supabase:ServiceRoleKey" "<clave-service-role>"
 ```
 
@@ -29,7 +28,6 @@ ASP.NET Core convierte `__` en `:` al cargar variables anidadas. En Windows:
 ```powershell
 $env:Supabase__Url = "https://<referencia-proyecto>.supabase.co"
 $env:Supabase__Issuer = "https://<referencia-proyecto>.supabase.co/auth/v1"
-$env:Supabase__JwtSecret = "<secreto-jwt>"
 $env:Supabase__ServiceRoleKey = "<clave-service-role>"
 ```
 
